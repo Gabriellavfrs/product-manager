@@ -74,3 +74,49 @@ func DeleteProduct(id string) {
 
 	defer db.Close()
 }
+
+func EditProduct(id string) Product {
+	db := db.ConnectDB()
+
+	productData, err := db.Query("select * from products where id=$1", id)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	product := Product{}
+
+	for productData.Next() {
+		var id, amount int
+		var name, description string
+		var price float64
+
+		err = productData.Scan(&id, &name, &description, &price, &amount)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		product.Id = id
+		product.Name = name
+		product.Description = description
+		product.Price = price
+		product.Amount = amount
+	}
+
+	defer db.Close()
+	return product
+}
+
+func UpdateProduct(id int, name, description string, price float64, amount int) {
+	db := db.ConnectDB()
+
+	updateQuery, err := db.Prepare("update products set name=$1, description=$2, price=$3, amount=$4 where id=$5")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	updateQuery.Exec(name, description, price, amount, id)
+	defer db.Close()
+}
